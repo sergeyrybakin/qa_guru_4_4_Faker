@@ -3,11 +3,9 @@ package tests;
 import org.junit.jupiter.api.BeforeAll;
 import com.codeborne.selenide.Configuration;
 
-public class TestBase
-{
+public class TestBase {
     @BeforeAll
-    static void setup()
-    {
+    static void setup() {
         Configuration.startMaximized = true;
     }
 }
