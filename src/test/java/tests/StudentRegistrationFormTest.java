@@ -1,14 +1,9 @@
 package tests;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
-
 import org.junit.jupiter.api.Test;
 
 import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
-import com.codeborne.selenide.SelenideElement;
 import com.github.javafaker.Faker;
 
 import static com.codeborne.selenide.Condition.appear;
@@ -24,15 +19,18 @@ public class StudentRegistrationFormTest {
         String firstName = faker.name().firstName();
         String lastName = faker.name().lastName();
         String email = firstName.toLowerCase() + "." + faker.letterify("??????").toLowerCase() + faker.numerify("###") + "." + "@gmail.com";
-        int gender = faker.number().numberBetween(1, 2);
+        int g = faker.number().numberBetween(1, 2);
+        String gender = (faker.number().numberBetween(1, 2) > 1 ? "Male" : "Female");
         String phone =  faker.numerify("##########");
-        String dateOfBirth = String.valueOf(faker.date().birthday(18, 60));
+        String day = Integer.toString(faker.number().numberBetween(1, 28));
+        String month = Integer.toString(faker.number().numberBetween(0,11));
+        String year = Integer.toString(faker.number().numberBetween(1950, 2005));
         int subject1 = faker.number().numberBetween(0, 4);
         int subject2 = faker.number().numberBetween(0, 4);
         int hobbyNumber = faker.number().numberBetween(1, 3);
         String address = faker.address().fullAddress();
         int stateNumber = faker.number().numberBetween(0, 3);
-        String photoFileName = (gender>1 ? "award1_700.jpg" : "1518521058110646316.jpg");
+        String photoFileName = (g>1 ? "award1_700.jpg" : "1518521058110646316.jpg");
 
         open("https://demoqa.com/automation-practice-form");
         $(".main-header").shouldHave(text("Practice Form")).should(Condition.appear);
@@ -40,18 +38,25 @@ public class StudentRegistrationFormTest {
         $("#firstName").setValue(firstName);
         $("#lastName").setValue(lastName);
         $("#userEmail").setValue(email);
-        String selectedGender = selectGender(gender);
+        //Gender
+        $$("#genterWrapper label").findBy(text(gender)).click();
+        //Phone
         $("#userNumber").setValue(phone);
         //Date of Birth
-        String formattedDateOfBirth = formatDateOfBirth(dateOfBirth);
-        typeDateOfBirth(formattedDateOfBirth);
+        $("#dateOfBirthInput").click();
+        $(".react-datepicker__month-select").click();
+        $(".react-datepicker__month-select [value='" + month + "']").click();
+        $(".react-datepicker__year-select").click();
+        $(".react-datepicker__year-select [value='" + year + "']").click();
+        String selectedMonthYear = $(".react-datepicker__current-month--hasMonthDropdown").getText();
+        String prefilledDay = (day.length()>1 ? day : "0" + day);
+        $(".react-datepicker__day--0" + prefilledDay + ":not(.react-datepicker__day--outside-month)").click();
         //Subject
         String selectedSubject = selectSubject(subject1, subject2);
         //Hobby
         String selectedHobby = selectHobby(hobbyNumber);
-
+        //Picture
         $("#uploadPicture").uploadFromClasspath("img/" + photoFileName);
-
         //Address
         $("#currentAddress").scrollTo().setValue(address);
         String selectedStateAndCity = selectRandomItemInDropDownList(stateNumber);
@@ -64,9 +69,9 @@ public class StudentRegistrationFormTest {
         ElementsCollection form = $$(".modal-body tr");
         form.filterBy(text("Student Name")).last().shouldHave(text(firstName + " " + lastName));
         form.filterBy(text("Student Email")).last().shouldHave(text(email));
-        form.filterBy(text("Gender")).last().shouldHave(text(selectedGender));
+        form.filterBy(text("Gender")).last().shouldHave(text(gender));
         form.filterBy(text("Mobile")).last().shouldHave(text(phone));
-        form.filterBy(text("Date of Birth")).last().shouldHave(text(getHindiDate(formattedDateOfBirth)));
+        form.filterBy(text("Date of Birth")).last().shouldHave(text(prefilledDay + " " + selectedMonthYear.replace(" ",",")));
         form.filterBy(text("Subjects")).last().shouldHave(text(selectedSubject));
         form.filterBy(text("Hobbies")).last().shouldHave(text(selectedHobby));
         form.filterBy(text("Address")).last().shouldHave(text(address));
@@ -74,11 +79,6 @@ public class StudentRegistrationFormTest {
         form.filterBy(text("Picture")).last().shouldHave(text(photoFileName));
 
         $("#closeLargeModal").scrollTo().click();
-    }
-
-    private String selectGender(int gender) {
-        $("#gender-radio-" + gender).sendKeys("/t ");
-        return $("#gender-radio-" + gender).getValue();
     }
 
     private String selectHobby(int i) {
@@ -108,27 +108,8 @@ public class StudentRegistrationFormTest {
         return s + ", " + $$(".subjects-auto-complete__multi-value__label").last().getText();
     }
 
-    private String formatDateOfBirth(String dateOfBirth) {
-        //Sat Oct 22 03:16:45 NOVT 1977   -> 22 Oct 1977
-        return dateOfBirth.substring(8,10) + " " + dateOfBirth.substring(4,7) + " " + dateOfBirth.substring(dateOfBirth.length()-4);
-    }
-
-    private void typeDateOfBirth(String dateOfBirth) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH);
-        LocalDate dateTime = LocalDate.parse(dateOfBirth, formatter);
-        int month = dateTime.getMonth().getValue() - 1;
-        $("#dateOfBirthInput").click();
-        $(".react-datepicker__year-select").click();
-        $(".react-datepicker__year-select").$$("option").findBy(text(Integer.toString(dateTime.getYear()))).click();
-        $(".react-datepicker__month-select").$$("option").get(month).click();
-        $(".react-datepicker__header").click();
-        $(".react-datepicker__day--0" + dateOfBirth.substring(0, 2) + ":not(.react-datepicker__day--outside-month)")
-                .click();
-    }
-
     private String selectRandomItemInDropDownList(int stateNumber) {
-        SelenideElement selectState = $("#state div[class $= '-placeholder']");
-        selectState.scrollTo().click();
+        $("#state div[class $= '-placeholder']").scrollTo().click();
         $("div[class $= '-menu']").should(appear);
         int amount = $$("div[class $= '-menu'] div div").size() - 1;
         if(amount <= stateNumber)
@@ -136,17 +117,9 @@ public class StudentRegistrationFormTest {
         else
             $("#react-select-3-option-" + stateNumber).click();
 
-        SelenideElement selectCity = $("#city div[class $= '-placeholder']");
-        selectCity.scrollTo().click();
+        $("#city div[class $= '-placeholder']").scrollTo().click();
         $("div[class $= '-menu']").should(appear);
         $$("div[class $= '-menu'] div div").last().click();
         return $("#state [class $= '-singleValue']").getText() + " " + $("#city [class $= '-singleValue']").getText();
-    }
-
-    private String getHindiDate(String dateOfBirth) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH);
-        LocalDate dateTime = LocalDate.parse(dateOfBirth, formatter);
-        DateTimeFormatter formatterOutput = DateTimeFormatter.ofPattern("dd MMMM,yyyy", Locale.ENGLISH);
-        return dateTime.format(formatterOutput);
     }
 }
