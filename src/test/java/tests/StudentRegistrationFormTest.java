@@ -20,7 +20,8 @@ public class StudentRegistrationFormTest {
         String lastName = faker.name().lastName();
         String email = firstName.toLowerCase() + "." + faker.letterify("??????").toLowerCase() + faker.numerify("###") + "." + "@gmail.com";
         int g = faker.number().numberBetween(1, 2);
-        String gender = (faker.number().numberBetween(1, 2) > 1 ? "Male" : "Female");
+        String gender = (g>1 ? "Male" : "Female");
+        String photoFileName = (g>1 ? "1518521058110646316.jpg" : "award1_700.jpg");
         String phone =  faker.numerify("##########");
         String day = Integer.toString(faker.number().numberBetween(1, 28));
         String month = Integer.toString(faker.number().numberBetween(0,11));
@@ -30,7 +31,6 @@ public class StudentRegistrationFormTest {
         int hobbyNumber = faker.number().numberBetween(1, 3);
         String address = faker.address().fullAddress();
         int stateNumber = faker.number().numberBetween(0, 3);
-        String photoFileName = (g>1 ? "award1_700.jpg" : "1518521058110646316.jpg");
 
         open("https://demoqa.com/automation-practice-form");
         $(".main-header").shouldHave(text("Practice Form")).should(Condition.appear);
