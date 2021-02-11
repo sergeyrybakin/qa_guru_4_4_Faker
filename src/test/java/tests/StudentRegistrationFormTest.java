@@ -95,7 +95,7 @@ public class StudentRegistrationFormTest {
 
     private String selectSubject(int n1, int n2) {
         String c = "abcde";
-        String c2 = "jhilo";
+        String c2 = "imnlo";
 
         $("#subjectsInput").setValue(String.valueOf(c.charAt(n1)));
         $(".subjects-auto-complete__menu-list").should(appear);
